@@ -14,6 +14,8 @@ if [ -f "$ENV_FILE" ]; then
   source "$ENV_FILE"
 fi
 
+check_required_variables
+
 # Проверка на наличие обязательных переменных
 prompt_if_unset() {
   local var_name="$1"
@@ -29,20 +31,11 @@ prompt_if_unset() {
   fi
 }
 
-prompt_if_unset "HOSTNAME" "Введите имя сервера (HOSTNAME)"
-prompt_if_unset "TELEGRAM_BOT_TOKEN" "Введите Telegram Bot Token"
-prompt_if_unset "TELEGRAM_CHAT_ID" "Введите Telegram Chat ID"
-
-# Запрос имени сервера, если не задано
-if [ -z "$HOSTNAME" ]; then
-  read -p "Введите имя сервера (HOSTNAME): " HOSTNAME
-  if grep -q "^HOSTNAME=" "$ENV_FILE" 2>/dev/null; then
-    sed -i "s/^HOSTNAME=.*/HOSTNAME=$HOSTNAME/" "$ENV_FILE"
-  else
-    echo "HOSTNAME=$HOSTNAME" >> "$ENV_FILE"
-  fi
-fi
-export HOSTNAME
+check_required_variables() {
+  prompt_if_unset "HOSTNAME" "Введите имя сервера (HOSTNAME)"
+  prompt_if_unset "TELEGRAM_BOT_TOKEN" "Введите Telegram Bot Token"
+  prompt_if_unset "TELEGRAM_CHAT_ID" "Введите Telegram Chat ID"
+}
 
 # Настройка Telegram
 setup_telegram() {
