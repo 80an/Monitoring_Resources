@@ -90,6 +90,11 @@ start_monitoring() {
   fi
 
   echo -e "${B_GREEN}▶️ Запуск мониторинга...${NO_COLOR}"
+  
+# Проверка, есть ли переменные и вызов меню настройки, если нет
+[ -z "$HOSTNAME" ] && setup_hostname
+{ [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; } && setup_telegram
+  
   nohup bash -c "source <(wget -qO- 'https://raw.githubusercontent.com/80an/Monitoring_Resources/refs/heads/main/monitor_resources.sh')" &> /dev/null &
   MONITOR_PID=$!
   echo "$MONITOR_PID" > "$MONITOR_PID_FILE"
