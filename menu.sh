@@ -14,30 +14,23 @@ if [ -f "$ENV_FILE" ]; then
   source "$ENV_FILE"
 fi
 
-# Проверка на наличие обязательных переменных
-prompt_if_unset() {
-  local var_name="$1"
-  local prompt="$2"
-  local value="${!var_name}"
+# Проверка и запрос недостающих переменных
+if [ -z "$HOSTNAME" ]; then
+  read -p "Введите имя сервера (HOSTNAME): " HOSTNAME
+  echo "HOSTNAME=$HOSTNAME" >> "$ENV_FILE"
+  export HOSTNAME
+fi
 
-  if [ -z "$value" ]; then
-    read -p "$prompt: " input
-    eval "export $var_name=\"\$input\""
-    if grep -q "^$var_name=" "$ENV_FILE" 2>/dev/null; then
-      sed -i "s|^$var_name=.*|$var_name=$input|" "$ENV_FILE"
-    else
-      echo "$var_name=$input" >> "$ENV_FILE"
-    fi
-  fi
-}
-
-
-check_required_variables() {
-  prompt_if_unset "HOSTNAME" "Введите имя сервера (HOSTNAME)"
-  prompt_if_unset "TELEGRAM_BOT_TOKEN" "Введите Telegram Bot Token"
-  prompt_if_unset "TELEGRAM_CHAT_ID" "Введите Telegram Chat ID"
-}
-check_required_variables
+if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+  echo -e "${B_YELLOW}🔧 Настройка Telegram...${NO_COLOR}"
+  read -p "Введите Telegram Bot Token: " TELEGRAM_BOT_TOKEN
+  read -p "Введите Telegram Chat ID: " TELEGRAM_CHAT_ID
+  echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> "$ENV_FILE"
+  echo "TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID" >> "$ENV_FILE"
+  export TELEGRAM_BOT_TOKEN
+  export TELEGRAM_CHAT_ID
+  echo -e "${B_GREEN}✅ Telegram настройки сохранены.${NO_COLOR}"
+fi
 
 # Настройка Telegram
 setup_telegram() {
@@ -83,10 +76,6 @@ start_monitoring() {
     echo -e "${B_YELLOW}⚠️ Мониторинг уже запущен (PID $(cat $MONITOR_PID_FILE))${NO_COLOR}"
     return
   fi
-
-  # Проверка, есть ли переменные и вызов меню настройки, если нет
-  [ -z "$HOSTNAME" ] && setup_hostname
-  { [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; } && setup_telegram
 
   echo -e "${B_GREEN}▶️ Запуск мониторинга...${NO_COLOR}"  
   nohup bash -c "source <(wget -qO- 'https://raw.githubusercontent.com/80an/Monitoring_Resources/refs/heads/main/monitor_resources.sh')" &> /dev/null &
