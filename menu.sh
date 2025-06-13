@@ -183,3 +183,4 @@ while true; do
       ;;
     *) echo -e "${B_RED}Неверный выбор. Повторите.${NO_COLOR}" ;;
   esac
+done
