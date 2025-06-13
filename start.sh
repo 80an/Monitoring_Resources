@@ -35,7 +35,12 @@ check_env() {
   if [[ -z "$SERVER_NAME" || -z "$TELEGRAM_TOKEN" || -z "$TELEGRAM_CHAT_ID" ]]; then
     ask_env_variables
   fi
+
+  export SERVER_NAME
+  export TELEGRAM_TOKEN
+  export TELEGRAM_CHAT_ID
 }
+
 
 # Отправка сообщений в Telegram
 send_telegram() {
