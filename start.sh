@@ -88,22 +88,51 @@ start_disk_monitoring() {
   if [[ -f /tmp/check_disk_space.pid && -d /proc/$(cat /tmp/check_disk_space.pid) ]]; then
     echo "Мониторинг диска уже запущен."
   else
-    check_disk_space &  # Запускаем в фоне
-    echo $! > /tmp/check_disk_space.pid
+    check_disk_space &  # Запуск в фоне
+    MONITOR_PID=$!
+    echo "$MONITOR_PID" > /tmp/check_disk_space.pid
+
+    disk_usage=$(df -h / | awk 'NR==2 {print $5}')
+
+    send_telegram "<b>✅ Мониторинг ресурсов запущен</b>
+
+🖥️ <b>Сервер:</b> <code>$SERVER_NAME</code>
+🆔 <code>$MONITOR_PID</code>
+
+📊 <b>Ресурсы:</b>
+• 💾 Диск: $disk_usage"
+
     echo "Мониторинг диска запущен."
   fi
 }
+
 
 # Запуск мониторинга памяти
 start_memory_monitoring() {
   if [[ -f /tmp/check_memory.pid && -d /proc/$(cat /tmp/check_memory.pid) ]]; then
     echo "Мониторинг памяти уже запущен."
   else
-    check_memory &  # Запускаем в фоне
-    echo $! > /tmp/check_memory.pid
+    check_memory &  # Запуск в фоне
+    MONITOR_PID=$!
+    echo "$MONITOR_PID" > /tmp/check_memory.pid
+
+    mem_total=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    mem_available=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
+    mem_used=$((mem_total - mem_available))
+    mem_usage_percent=$((mem_used * 100 / mem_total))
+
+    send_telegram "<b>✅ Мониторинг ресурсов запущен</b>
+
+🖥️ <b>Сервер:</b> <code>$SERVER_NAME</code>
+🆔 <code>$MONITOR_PID</code>
+
+📊 <b>Ресурсы:</b>
+• 🧠 Память: ${mem_usage_percent}%"
+
     echo "Мониторинг памяти запущен."
   fi
 }
+
 
 # Проверка запущенных процессов
 check_monitoring_status() {
