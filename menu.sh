@@ -9,11 +9,16 @@ NO_COLOR="\e[0m"
 MONITOR_PID_FILE="/tmp/monitor_pid"
 ENV_FILE="$HOME/.monitor_env"
 
+# Загрузка .env, если существует
+if [ -f "$ENV_FILE" ]; then
+  source "$ENV_FILE"
+fi
+
 # Проверка и запрос недостающих переменных
-if [ -z "$HOSTNAME" ]; then
-  read -p "Введите имя сервера (HOSTNAME): " HOSTNAME
-  echo "HOSTNAME=$HOSTNAME" >> "$ENV_FILE"
-  export HOSTNAME
+if [ -z "$MONITOR_HOSTNAME" ]; then
+  read -p "Введите имя сервера (MONITOR_HOSTNAME): " MONITOR_HOSTNAME
+  echo "MONITOR_HOSTNAME=$MONITOR_HOSTNAME" >> "$ENV_FILE"
+  export MONITOR_HOSTNAME
 fi
 
 if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
@@ -25,11 +30,6 @@ if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
   export TELEGRAM_BOT_TOKEN
   export TELEGRAM_CHAT_ID
   echo -e "${B_GREEN}✅ Telegram настройки сохранены.${NO_COLOR}"
-fi
-
-# Загрузка .env, если существует
-if [ -f "$ENV_FILE" ]; then
-  source "$ENV_FILE"
 fi
 
 # Настройка Telegram
@@ -44,14 +44,14 @@ setup_telegram() {
 
 # Настройка имени сервера
 setup_hostname() {
-  read -p "Введите новое имя сервера (HOSTNAME): " HOSTNAME
-  if grep -q "^HOSTNAME=" "$ENV_FILE" 2>/dev/null; then
-    sed -i "s/^HOSTNAME=.*/HOSTNAME=$HOSTNAME/" "$ENV_FILE"
+  read -p "Введите новое имя сервера (MONITOR_HOSTNAME): " MONITOR_HOSTNAME
+  if grep -q "^MONITOR_HOSTNAME=" "$ENV_FILE" 2>/dev/null; then
+    sed -i "s/^MONITOR_HOSTNAME=.*/MONITOR_HOSTNAME=$MONITOR_HOSTNAME/" "$ENV_FILE"
   else
-    echo "HOSTNAME=$HOSTNAME" >> "$ENV_FILE"
+    echo "MONITOR_HOSTNAME=$MONITOR_HOSTNAME" >> "$ENV_FILE"
   fi
-  export HOSTNAME
-  echo -e "${B_GREEN}✅ Имя сервера обновлено: $HOSTNAME${NO_COLOR}"
+  export MONITOR_HOSTNAME
+  echo -e "${B_GREEN}✅ Имя сервера обновлено: $MONITOR_HOSTNAME${NO_COLOR}"
 }
 
 # Отправка сообщений в Telegram
@@ -89,7 +89,7 @@ start_monitoring() {
   read -r -d '' message <<EOF
 <b>✅ Мониторинг ресурсов запущен</b>
 
-🖥️ <b>Сервер:</b> <code>$HOSTNAME</code>
+🖥️ <b>Сервер:</b> <code>$MONITOR_HOSTNAME</code>
 🆔 <code>$MONITOR_PID</code>
 
 📊 <b>Ресурсы:</b>
@@ -109,7 +109,7 @@ stop_background_monitors() {
       if kill -0 "$PID" 2>/dev/null; then
         kill "$PID"
         echo -e "${B_RED}⛔ Процесс (PID $PID) остановлен [$(basename "$pid_file")]${NO_COLOR}"
-        send_telegram_alert "⛔ <b>Фоновый процесс остановлен</b>\n🖥️ <code>$HOSTNAME</code>\n📄 <code>$(basename "$pid_file")</code> (PID $PID)"
+        send_telegram_alert "⛔ <b>Фоновый процесс остановлен</b>\n🖥️ <code>$MONITOR_HOSTNAME</code>\n📄 <code>$(basename "$pid_file")</code> (PID $PID)"
         stopped_any=true
       fi
       rm -f "$pid_file"
@@ -129,7 +129,7 @@ stop_monitoring() {
       kill "$MONITOR_PID"
       echo -e "${B_RED}⛔ Мониторинг остановлен (PID $MONITOR_PID)${NO_COLOR}"
       rm -f "$MONITOR_PID_FILE"
-      send_telegram_alert "⛔ <b>Мониторинг остановлен</b>\n🖥️ <code>$HOSTNAME</code>\n🆔 <code>$MONITOR_PID</code>"
+      send_telegram_alert "⛔ <b>Мониторинг остановлен</b>\n🖥️ <code>$MONITOR_HOSTNAME</code>\n🆔 <code>$MONITOR_PID</code>"
     else
       echo -e "${B_YELLOW}⚠️ Процесс мониторинга не найден. Удаляю PID-файл.${NO_COLOR}"
       rm -f "$MONITOR_PID_FILE"
@@ -183,4 +183,3 @@ while true; do
       ;;
     *) echo -e "${B_RED}Неверный выбор. Повторите.${NO_COLOR}" ;;
   esac
-done
