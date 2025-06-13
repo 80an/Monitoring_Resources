@@ -18,16 +18,19 @@ fi
 prompt_if_unset() {
   local var_name="$1"
   local prompt="$2"
-  if [ -z "${!var_name}" ]; then
-    read -p "$prompt: " value
-    eval "export $var_name=\"$value\""
+  local value="${!var_name}"
+
+  if [ -z "$value" ]; then
+    read -p "$prompt: " input
+    export "$var_name"="$input"
     if grep -q "^$var_name=" "$ENV_FILE" 2>/dev/null; then
-      sed -i "s|^$var_name=.*|$var_name=$value|" "$ENV_FILE"
+      sed -i "s|^$var_name=.*|$var_name=$input|" "$ENV_FILE"
     else
-      echo "$var_name=$value" >> "$ENV_FILE"
+      echo "$var_name=$input" >> "$ENV_FILE"
     fi
   fi
 }
+
 
 check_required_variables() {
   prompt_if_unset "HOSTNAME" "Введите имя сервера (HOSTNAME)"
