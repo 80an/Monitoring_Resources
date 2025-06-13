@@ -14,8 +14,6 @@ if [ -f "$ENV_FILE" ]; then
   source "$ENV_FILE"
 fi
 
-check_required_variables
-
 # Проверка на наличие обязательных переменных
 prompt_if_unset() {
   local var_name="$1"
@@ -36,6 +34,7 @@ check_required_variables() {
   prompt_if_unset "TELEGRAM_BOT_TOKEN" "Введите Telegram Bot Token"
   prompt_if_unset "TELEGRAM_CHAT_ID" "Введите Telegram Chat ID"
 }
+check_required_variables
 
 # Настройка Telegram
 setup_telegram() {
