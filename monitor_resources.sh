@@ -14,8 +14,8 @@ if [[ -z "$TELEGRAM_BOT_TOKEN" || -z "$TELEGRAM_CHAT_ID" ]]; then
   exit 1
 fi
 
-# Имя хоста
-HOST_NAME=$(hostname)
+# Имя хоста (ТОЛЬКО из .monitor_env)
+HOST_NAME="${HOSTNAME:?HOSTNAME не задан. Проверь .monitor_env}"
 
 # Функция отправки уведомлений
 send_telegram_alert() {
