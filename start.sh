@@ -46,78 +46,43 @@ send_telegram() {
     -d text="$message" > /dev/null
 }
 
-# Мониторинг диска
-start_disk_monitoring() {
-  cat > /tmp/check_disk_space.sh <<'EOF'
-#!/bin/bash
-while true; do
-  USAGE=$(df -h / | awk 'NR==2 {print $5}' | tr -d '%')
-  if (( USAGE > 90 )); then
-    source .monitor_env
-    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
-      -d chat_id="$TELEGRAM_CHAT_ID" \
-      -d parse_mode="HTML" \
-      -d text="<b>[$SERVER_NAME]</b> 💾 Диск заполнен на ${USAGE}%!"
-  fi
-  sleep 300
-done
-EOF
+# Функция проверки дискового пространства
+check_disk_space() {
+  while true; do
+    disk_usage=$(df -h / | awk 'NR==2 {print $5}' | tr -d '%')
 
-  chmod +x /tmp/check_disk_space.sh
-  nohup bash /tmp/check_disk_space.sh > /dev/null 2>&1 &
-  pid=$!
-  echo $pid > /tmp/check_disk_space.pid
+    if [ "$disk_usage" -ge 100 ]; then
+      send_telegram_alert "❌ ДИСК ЗАПОЛНЕН НА 100%! Требуется немедленное вмешательство!"
+    elif [ "$disk_usage" -ge 98 ]; then
+      send_telegram_alert "🚨 Диск почти заполнен: ${disk_usage}%! Проверьте, освободите место."
+    elif [ "$disk_usage" -ge 96 ]; then
+      send_telegram_alert "⚠️ Предупреждение: диск заполнен на ${disk_usage}%. Задумайтесь о том, чтобы освободить место."
+    fi
 
-  disk_usage=$(df -h / | awk 'NR==2 {print $3 "/" $2 " (" $5 ")"}')
-  mem_info=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
-  send_telegram "<b>✅ Мониторинг ресурсов запущен</b>
-
-🖥️ <b>Сервер:</b> <code>$SERVER_NAME</code>
-🆔 <code>$pid</code>
-
-📊 <b>Ресурсы:</b>
-• 💾 Диск: $disk_usage
-• 🧠 RAM: $mem_info"
-
-  echo "Мониторинг диска запущен"
+    sleep 300  # Проверка каждые 5 минут
+  done
 }
 
+# Функция проверки оперативной памяти
+check_memory() {
+  while true; do
+    mem_total=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    mem_available=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
+    mem_used=$((mem_total - mem_available))
+    mem_usage_percent=$((mem_used * 100 / mem_total))
 
-# Мониторинг RAM
-start_memory_monitoring() {
-  cat > /tmp/check_memory.sh <<'EOF'
-#!/bin/bash
-while true; do
-  USED=$(free | awk '/Mem:/ {printf("%.0f", $3/$2 * 100)}')
-  if (( USED > 90 )); then
-    source .monitor_env
-    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
-      -d chat_id="$TELEGRAM_CHAT_ID" \
-      -d parse_mode="HTML" \
-      -d text="<b>[$SERVER_NAME]</b> 🧠 Память используется на ${USED}%!"
-  fi
-  sleep 300
-done
-EOF
+    if [ "$mem_usage_percent" -ge 99 ]; then
+      send_telegram_alert "❌ ОЗУ почти полностью занята (${mem_usage_percent}%). Требуется немедленная проверка!"
+    elif [ "$mem_usage_percent" -ge 95 ]; then
+      send_telegram_alert "🚨 Высокое потребление памяти: ${mem_usage_percent}%. Рассмотрите возможность оптимизации."
+    elif [ "$mem_usage_percent" -ge 85 ]; then
+      send_telegram_alert "⚠️ Использование памяти превышает 85% (${mem_usage_percent}%)."
+    fi
 
-  chmod +x /tmp/check_memory.sh
-  nohup bash /tmp/check_memory.sh > /dev/null 2>&1 &
-  pid=$!
-  echo $pid > /tmp/check_memory.pid
-
-  disk_usage=$(df -h / | awk 'NR==2 {print $3 "/" $2 " (" $5 ")"}')
-  mem_info=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
-  send_telegram "<b>✅ Мониторинг ресурсов запущен</b>
-
-🖥️ <b>Сервер:</b> <code>$SERVER_NAME</code>
-🆔 <code>$pid</code>
-
-📊 <b>Ресурсы:</b>
-• 💾 Диск: $disk_usage
-• 🧠 RAM: $mem_info"
-
-  echo "Мониторинг памяти запущен"
+    sleep 300  # Проверка каждые 5 минут
+  done
 }
+
 
 
 # Проверка запущенных процессов
