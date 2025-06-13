@@ -22,7 +22,7 @@ prompt_if_unset() {
 
   if [ -z "$value" ]; then
     read -p "$prompt: " input
-    export "$var_name"="$input"
+    eval "export $var_name=\"\$input\""
     if grep -q "^$var_name=" "$ENV_FILE" 2>/dev/null; then
       sed -i "s|^$var_name=.*|$var_name=$input|" "$ENV_FILE"
     else
