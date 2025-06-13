@@ -9,11 +9,6 @@ NO_COLOR="\e[0m"
 MONITOR_PID_FILE="/tmp/monitor_pid"
 ENV_FILE="$HOME/.monitor_env"
 
-# Загрузка .env, если существует
-if [ -f "$ENV_FILE" ]; then
-  source "$ENV_FILE"
-fi
-
 # Проверка и запрос недостающих переменных
 if [ -z "$HOSTNAME" ]; then
   read -p "Введите имя сервера (HOSTNAME): " HOSTNAME
@@ -30,6 +25,11 @@ if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
   export TELEGRAM_BOT_TOKEN
   export TELEGRAM_CHAT_ID
   echo -e "${B_GREEN}✅ Telegram настройки сохранены.${NO_COLOR}"
+fi
+
+# Загрузка .env, если существует
+if [ -f "$ENV_FILE" ]; then
+  source "$ENV_FILE"
 fi
 
 # Настройка Telegram
