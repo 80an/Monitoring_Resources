@@ -45,11 +45,14 @@ check_env() {
 # Отправка сообщений в Telegram
 send_telegram() {
   local message="$1"
+  echo "Отправка сообщения в Telegram..."
+  echo "$message"
   curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
     -d chat_id="$TELEGRAM_CHAT_ID" \
     -d parse_mode="HTML" \
-    -d text="$message" > /dev/null
+    -d text="$message"
 }
+
 
 # Функция проверки дискового пространства
 check_disk_space() {
