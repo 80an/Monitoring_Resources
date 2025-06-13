@@ -62,11 +62,26 @@ while true; do
   sleep 300
 done
 EOF
+
   chmod +x /tmp/check_disk_space.sh
   nohup bash /tmp/check_disk_space.sh > /dev/null 2>&1 &
-  echo $! > /tmp/check_disk_space.pid
+  pid=$!
+  echo $pid > /tmp/check_disk_space.pid
+
+  disk_usage=$(df -h / | awk 'NR==2 {print $3 "/" $2 " (" $5 ")"}')
+  mem_info=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
+  send_telegram "<b>✅ Мониторинг ресурсов запущен</b>
+
+🖥️ <b>Сервер:</b> <code>$SERVER_NAME</code>
+🆔 <code>$pid</code>
+
+📊 <b>Ресурсы:</b>
+• 💾 Диск: $disk_usage
+• 🧠 RAM: $mem_info"
+
   echo "Мониторинг диска запущен"
 }
+
 
 # Мониторинг RAM
 start_memory_monitoring() {
@@ -84,11 +99,26 @@ while true; do
   sleep 300
 done
 EOF
+
   chmod +x /tmp/check_memory.sh
   nohup bash /tmp/check_memory.sh > /dev/null 2>&1 &
-  echo $! > /tmp/check_memory.pid
+  pid=$!
+  echo $pid > /tmp/check_memory.pid
+
+  disk_usage=$(df -h / | awk 'NR==2 {print $3 "/" $2 " (" $5 ")"}')
+  mem_info=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
+  send_telegram "<b>✅ Мониторинг ресурсов запущен</b>
+
+🖥️ <b>Сервер:</b> <code>$SERVER_NAME</code>
+🆔 <code>$pid</code>
+
+📊 <b>Ресурсы:</b>
+• 💾 Диск: $disk_usage
+• 🧠 RAM: $mem_info"
+
   echo "Мониторинг памяти запущен"
 }
+
 
 # Проверка запущенных процессов
 check_monitoring_status() {
