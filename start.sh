@@ -52,8 +52,10 @@ send_telegram() {
   curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
     -d chat_id="$TELEGRAM_CHAT_ID" \
     -d parse_mode="HTML" \
-    -d text="$message"
+    --data-urlencode text="$message" \
+  || echo "❌ Ошибка отправки сообщения в Telegram"
 }
+
 
 
 # Функция проверки дискового пространства
