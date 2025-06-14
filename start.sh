@@ -6,8 +6,10 @@ ENV_FILE=".monitor_env"
 load_env() {
   if [[ -f "$ENV_FILE" ]]; then
     source "$ENV_FILE"
+    export SERVER_NAME TELEGRAM_TOKEN TELEGRAM_CHAT_ID
   fi
 }
+
 
 # Сохранение переменных
 save_env() {
